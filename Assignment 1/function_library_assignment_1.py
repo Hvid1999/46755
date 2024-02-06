@@ -44,6 +44,11 @@ def read_data(data:str, path:str = 'data/'):
 
     wind_data = wind_data[12:36].reset_index(drop=True) #selected data is from hours 13 to and including 36 (0-indexed: 12 to and including 35)
 
+    # It is proposed in the system report that the transmission lines connecting the 
+    # node pairs (15, 21), (14, 16) and (13, 23) is reduced to 400 MW, 250 MW and 250 MW, respectively
+    line_data.loc[(line_data['From'] == 15) & (line_data['To'] == 21), 'Capacity MVA'] = 400
+    line_data.loc[(line_data['From'] == 14) & (line_data['To'] == 16), 'Capacity MVA'] = 250
+    line_data.loc[(line_data['From'] == 13) & (line_data['To'] == 23), 'Capacity MVA'] = 250
 
     #Filling out branch susceptance matrix and adjusting branch data
     line_data['Susceptance pu'] = 1 / line_data['Reactance pu']
