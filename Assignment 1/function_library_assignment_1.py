@@ -29,6 +29,8 @@ def read_data(data:str, path:str = 'data/'):
     system_demand = pd.read_excel(path + 'system_demand.xlsx')
     load_distribution = pd.read_excel(path + 'load_distribution.xlsx')
 
+    all_bid_prices = pd.read_excel(path + 'demand_bids.xlsx')
+
     # Wind data processing - see the notebook for visualization
     wind_data_raw = []
     for i in range(6):
@@ -81,6 +83,8 @@ def read_data(data:str, path:str = 'data/'):
         return wind_data
     elif data == 'branch_matrix':
         return branch_matrix
+    elif data == 'all_bid_prices':
+        return all_bid_prices  
     else:
         print('Invalid input.')
         return None
