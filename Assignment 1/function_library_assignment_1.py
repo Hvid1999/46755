@@ -20,7 +20,7 @@ def read_data(data:str, path:str = 'data/'):
     # 'wind_data'
     # 'branch_matrix'
 
-    gen_costs = pd.read_excel(path + 'gen_costs.xlsx')['C ($/MWh)'].to_frame()
+    gen_costs = pd.read_excel(path + 'gen_costs.xlsx')
     gen_costs['C (DKK/MWh)'] = gen_costs['C ($/MWh)'].values * 7.03 #USD to DKK
 
     gen_data = pd.read_excel(path + 'gen_data.xlsx')
