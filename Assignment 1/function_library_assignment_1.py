@@ -62,7 +62,7 @@ def read_data(data:str, path:str = 'data/'):
         branch_matrix[n - 1][n - 1] = line_data.loc[(line_data['From'] == n) | (line_data['To'] == n), 'Susceptance pu'].sum()
         for k in range(n, n_bus + 1): #start from n
             if k != n:
-                branch_matrix[n - 1][k - 1] = -1 * (line_data.loc[(line_data['From'] == n) & (line_data['To'] == k), 'Susceptance pu'].sum())
+                branch_matrix[n - 1][k - 1] = (line_data.loc[(line_data['From'] == n) & (line_data['To'] == k), 'Susceptance pu'].sum())
                 branch_matrix[k - 1][n - 1] = branch_matrix[n - 1][k - 1] #symmetric
 
     #Since the process is so fast, we might as well just handle all the data at every function call and return the desired data
@@ -88,23 +88,3 @@ def read_data(data:str, path:str = 'data/'):
     else:
         print('Invalid input.')
         return None
-
-def mapping_dictionaries(gen_data, wf_nodes:list = [2, 4, 6, 15, 20, 22]):
-    #These dictionarys return the 0-indexed indices of generators or wind farms located at the node n
-
-    #for example, gens_map.get(0) will return the list [0] because generator 1 is placed at node 1
-    #gens_map.get(14) will return [4, 5] because generators 5 and 6 are at node 15
-
-    #if no wind farms or generators are located at node n, it will return an empty list
-
-    gens_map = {}
-
-    for n in range(1, n_bus + 1):
-        gens_map[n - 1] = (gen_data['Unit #'][gen_data['Node'] == n] - 1).tolist()
-
-    wf_map = {}
-
-    for n in range(n_bus):
-        wf_map[n] = np.where(np.array(wf_nodes) == n)[0].tolist()
-
-    return gens_map, wf_map
