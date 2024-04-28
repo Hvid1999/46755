@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[152]:
+# In[1]:
 
 
 import gurobipy as gb
@@ -24,7 +24,7 @@ plt.rcParams['grid.linestyle'] = '-.'
 plt.rcParams['grid.linewidth'] = 0.4
 
 
-# In[153]:
+# In[2]:
 
 
 #Scenario Data
@@ -62,7 +62,7 @@ print('Number of extracted scenarios:', len(scenarios))
 alpha = 0.90  # Confidence level
 
 
-# In[154]:
+# In[8]:
 
 
 def cvr_op_scheme(scenarios, WIND_CAPACITY, T, OMEGA, alpha, beta_values):
@@ -79,35 +79,30 @@ def cvr_op_scheme(scenarios, WIND_CAPACITY, T, OMEGA, alpha, beta_values):
         p_DA = m.addVars(T, lb=0, ub=gb.GRB.INFINITY, name="p_DA")  # day-ahead power bid
         delta = m.addVars(T, OMEGA, lb=-gb.GRB.INFINITY, ub=gb.GRB.INFINITY, name="delta")  # decision variable for the power imbalance - can be negative
         price_coeff = m.addVars(T, OMEGA, lb=0, ub=gb.GRB.INFINITY, name="K")  # price coefficient for the imbalance price wrt. the day-ahead price
+        #threshold = m.addVars(OMEGA, lb=-gb.GRB.INFINITY, ub=0, name="Threshold")  # threshold variables for each scenario
 
         #============= Objective function =============
         # Set objective function - note that the day-ahead price is factored out of the sum
         expected_profit = (1-beta)* gb.quicksum(PI * scenarios[str(w)]['Spot Price [EUR/MWh]'][t] * (p_DA[t] + price_coeff[t, w] * delta[t, w]) for t in range(T) for w in range(OMEGA))
-        var_sum = gb.quicksum(scenarios[str(w)]['Spot Price [EUR/MWh]'][t] * (p_DA[t] + price_coeff[t, w] * delta[t, w]) for t in range(T) for w in range(OMEGA))
-        cvar = (1 / (1 - alpha)) * var_sum
+             
+        profits = {}
+        for w in range(OMEGA):
+            for t in range(T):
+                profits = [scenarios[str(w)]['Spot Price [EUR/MWh]'][t] * (p_DA[t] + price_coeff[t,w] * delta[t,w])]
+                #profits[(w, t)] = profit_expr
+        
+        # Sort profits in ascending order
+        sorted_profits = np.sort(profits)
+
+        # Calculate CVaR
+        VaR_index = int(np.ceil(alpha * len(sorted_profits)))
+        VaR_value = sorted_profits[VaR_index - 1]
+        cvar = (1 / ((1 - alpha) * len(sorted_profits))) * np.sum(sorted_profits[:VaR_index])
+
+        # var_sum = gb.quicksum(scenarios[str(w)]['Spot Price [EUR/MWh]'][t] * (p_DA[t] + price_coeff[t, w] * delta[t, w]) for t in range(T) for w in range(OMEGA))
+        # cvar = (1 / (1 - alpha)) * var_sum
         obj = expected_profit + beta * cvar
         m.setObjective(obj, direction)
-        #============= Objective function =============
-        # Calculate expected profit
-        # expected_profit = gb.quicksum(PI * scenarios[str(w)]['Spot Price [EUR/MWh]'][t] * (p_DA[t] + price_coeff[t,w] * delta[t,w]) for t in range(T) for w in range(OMEGA))
-        
-        # profits = {}
-        # for w in range(OMEGA):
-        #     for t in range(T):
-        #         profit_expr = PI * scenarios[str(w)]['Spot Price [EUR/MWh]'][t] * (p_DA[t] + price_coeff[t,w] * delta[t,w])
-        #         profits[(w, t)] = profit_expr
-
-        # #============= Compute VaR ===============
-        # profit_values = [m.getObjective().getValue() for (w, t), profit_expr in profits.items()]
-        # VaR = np.percentile(profit_values, (1 - alpha) * 100)
-        
-        # #============= Compute CVaR ===============
-        # VaR_losses = [loss for loss in profit_values if loss <= VaR]
-        # CVaR = VaR + (1 / (1 - alpha)) * sum(VaR_losses) / len(VaR_losses) if VaR_losses else float('inf')
-
-        # #============= Set objective function ===============
-        # obj = expected_profit + beta * CVaR
-        # m.setObjective(obj, direction)
 
         #============= Day-ahead power bid limits ============
         m.addConstrs(p_DA[t] <= WIND_CAPACITY for t in range(T))
@@ -119,8 +114,8 @@ def cvr_op_scheme(scenarios, WIND_CAPACITY, T, OMEGA, alpha, beta_values):
         m.addConstrs(price_coeff[t, w] == 1.2 * scenarios[str(w)]['System Balance State'][t] + 0.9 * (1 - scenarios[str(w)]['System Balance State'][t]) for t in range(T) for w in range(OMEGA))
 
         #===========CVAR constraints===============
-        #===========CVAR constraints===============
-        #m.addConstr(-expected_profit+var_sum <= 0)
+        m.addConstrs((-gb.quicksum(scenarios[str(w)]['Spot Price [EUR/MWh]'][t] * (p_DA[t] + price_coeff[t, w] * delta[t, w]) for t in range(T) for w in range(OMEGA)) 
+                    + VaR_value <= 0 for w in range(OMEGA)), name="RiskThreshold")
 
         #============= Display and run model =============
         m.update()
@@ -148,7 +143,7 @@ def cvr_op_scheme(scenarios, WIND_CAPACITY, T, OMEGA, alpha, beta_values):
                 df.set_index('Hour', inplace=True)
                 results[scenario] = df.copy(deep=True)
             
-            cvar_value = (1 / (1 - alpha)) * (var_sum.getValue())
+            cvar_value = beta*cvar.getValue()#(1 / (1 - alpha)) * (var_sum.getValue())
             adjusted_expected_profit = m.objVal - beta * cvar_value
             p_DA_values = [p_DA[t].x for t in range(T)]
             
@@ -195,7 +190,7 @@ beta_values = np.linspace(0, 1, 10)
 #results = solve_op_scheme(scenarios, WIND_CAPACITY, T, OMEGA, alpha, beta_values)
 
 
-# In[155]:
+# In[9]:
 
 
 results_per_beta,p_DA_values_per_beta = cvr_op_scheme(scenarios, WIND_CAPACITY, T, OMEGA, alpha, beta_values)
@@ -217,7 +212,16 @@ plt.show()
 
 
 
-# In[156]:
+# In[10]:
+
+
+for beta in betas:
+    expected_values = results_per_beta[beta]['Adjusted Expected Profit']
+    cvars = results_per_beta[beta]['CVaR']
+    print(cvars)
+
+
+# In[ ]:
 
 
 # beta_values = np.linspace(0, 1, 10)
@@ -238,7 +242,7 @@ plt.show()
 #     return CVaR_value
 
 
-# In[157]:
+# In[17]:
 
 
 def cvr_tp_scheme(scenarios, WIND_CAPACITY, T, OMEGA, alpha, beta_values):
@@ -263,9 +267,24 @@ def cvr_tp_scheme(scenarios, WIND_CAPACITY, T, OMEGA, alpha, beta_values):
 
         #============= Objective function =============
         # Set objective function
-        expected_profit = (1-beta)* gb.quicksum(scenarios[str(w)]['Spot Price [EUR/MWh]'][t] * (p_DA[t] + imbalance_revenue[t, w]) for t in range(T) for w in range(OMEGA))
-        var_sum = gb.quicksum(scenarios[str(w)]['Spot Price [EUR/MWh]'][t] * (p_DA[t] + imbalance_revenue[t, w]) for t in range(T) for w in range(OMEGA))
-        cvar = (1 / (1 - alpha)) * var_sum
+        expected_profit = (1-beta)*gb.quicksum(PI * (scenarios[str(w)]['Spot Price [EUR/MWh]'][t] * p_DA[t] + imbalance_revenue[t,w]) for t in range(T) for w in range(OMEGA))
+        
+        profits = {}
+        for w in range(OMEGA):
+            for t in range(T):
+                profits = [scenarios[str(w)]['Spot Price [EUR/MWh]'][t] * p_DA[t] + imbalance_revenue[t,w]]
+                #profits[(w, t)] = profit_expr
+        
+        # Sort profits in ascending order
+        sorted_profits = np.sort(profits)
+
+        # Calculate CVaR
+        VaR_index = int(np.ceil(alpha * len(sorted_profits)))
+        VaR_value = sorted_profits[VaR_index - 1]
+        cvar = (1 / ((1 - alpha) * len(sorted_profits))) * np.sum(sorted_profits[:VaR_index])
+
+        # var_sum = gb.quicksum(scenarios[str(w)]['Spot Price [EUR/MWh]'][t] * (p_DA[t] + imbalance_revenue[t, w]) for t in range(T) for w in range(OMEGA))
+        # cvar = (1 / (1 - alpha)) * var_sum
         obj = expected_profit + beta * cvar
 
         m.setObjective(obj, direction)
@@ -293,7 +312,7 @@ def cvr_tp_scheme(scenarios, WIND_CAPACITY, T, OMEGA, alpha, beta_values):
         m.addConstrs(imbalance_revenue[t, w] <= -1.2 * scenarios[str(w)]['Spot Price [EUR/MWh]'][t] * delta_down[t, w] + M * z[3, t, w] for t in range(T) for w in range(OMEGA))
 
         #===========CVAR constraints===============
-        m.addConstr(-expected_profit+var_sum <= 0)
+        m.addConstrs(-gb.quicksum((scenarios[str(w)]['Spot Price [EUR/MWh]'][t] * p_DA[t] + imbalance_revenue[t,w]) for t in range(T) for w in range(OMEGA))+ VaR_value <= 0 for w in range(OMEGA))
 
         m.update()
         m.optimize()
@@ -323,8 +342,9 @@ def cvr_tp_scheme(scenarios, WIND_CAPACITY, T, OMEGA, alpha, beta_values):
                 results[scenario] = df.copy(deep=True)
 
             p_DA_values = [p_DA[t].x for t in range(T)]
-            adjusted_expected_profit = m.objVal - beta * (1 / (1 - alpha)) * (var_sum.getValue())
-            cvar_value = (1 / (1 - alpha)) * (var_sum.getValue())
+            cvar_value = beta*cvar.getValue()
+            adjusted_expected_profit = m.objVal - beta * cvar_value
+            
 
             results['Adjusted Expected Profit'] = adjusted_expected_profit
             results['CVaR'] = cvar_value
@@ -366,7 +386,7 @@ beta_values = np.linspace(0, 1, 10)
 #results = solve_op_scheme(scenarios, WIND_CAPACITY, T, OMEGA, alpha, beta_values)
 
 
-# In[158]:
+# In[18]:
 
 
 results_per_beta, p_DA_values_per_beta = cvr_tp_scheme(scenarios, WIND_CAPACITY, T, OMEGA, alpha, beta_values)
