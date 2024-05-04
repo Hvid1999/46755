@@ -42,7 +42,7 @@ random.seed(123)
 # Sample scenarios without replacement
 in_sample_scenarios = random.sample(range(S), OMEGA)
 
-print(in_sample_scenarios)
+#print(in_sample_scenarios)
 
 scenarios = {}
 
@@ -51,7 +51,7 @@ for i in range(len(in_sample_scenarios)):
     scenarios[str(i)] = all_scenarios[str(in_sample_scenarios[i])]
     scenarios[str(i)]['Original Index'] = in_sample_scenarios[i]
     
-print('Number of extracted scenarios:', len(scenarios))
+#print('Number of extracted scenarios:', len(scenarios))
 
 
 # In[3]:
@@ -153,8 +153,8 @@ def cvr_op_scheme(scenarios, WIND_CAPACITY, T, OMEGA, alpha, beta_values, minimi
                 results[scenario] = df.copy(deep=True)
 
                 eta_values = [eta[w].x for w in range(OMEGA)]
-                delta_values = [delta[t, w].x for t in range(T) for w in range(OMEGA)]
-                price_coeff_values = [price_coeff[t, w].x for t in range(T) for w in range(OMEGA)]
+                #delta_values = [delta[t, w].x for t in range(T) for w in range(OMEGA)]
+                #price_coeff_values = [price_coeff[t, w].x for t in range(T) for w in range(OMEGA)]
 
             #Get CVaR, VaR, and expected profit  
             cvar_value = cvar.getValue()
@@ -169,8 +169,8 @@ def cvr_op_scheme(scenarios, WIND_CAPACITY, T, OMEGA, alpha, beta_values, minimi
             print('CVaR: %.10f EUR' % results['CVaR'])
             print('VaR: %.2f EUR' % results['VaR'])
             print('Eta values:', eta_values)
-            print('Delta values:', delta_values)
-            print('Price coefficient values:', price_coeff_values)
+            #print('Delta values:', delta_values)
+            #print('Price coefficient values:', price_coeff_values)
             
             if not minimize_printouts:
                 print('-----------------------------------------------')
@@ -208,13 +208,13 @@ def cvr_op_scheme(scenarios, WIND_CAPACITY, T, OMEGA, alpha, beta_values, minimi
             print("Optimization was not successful.")
     return results_per_beta,p_DA_values_per_beta
 
-results_per_beta_op, p_DA_values_per_beta_op = cvr_op_scheme(scenarios, WIND_CAPACITY, T, OMEGA, alpha, beta_values, minimize_printouts=True)
 
 
 # In[250]:
 
+#results_per_beta_op, p_DA_values_per_beta_op = cvr_op_scheme(scenarios, WIND_CAPACITY, T, OMEGA, alpha, beta_values, minimize_printouts=True)
 
-results_per_beta_op[0.5]['Summary'].round(2)
+#results_per_beta_op[0.5]['Summary'].round(2)
 
 
 # In[268]:
@@ -222,12 +222,12 @@ results_per_beta_op[0.5]['Summary'].round(2)
 
 # Plot expected value vs. CVaR for different beta values
 
-fig = plt.figure(figsize=(10, 6))
+# fig = plt.figure(figsize=(10, 6))
 
-ax = fig.gca()
-betas = list(results_per_beta_op.keys())
-expected_profit = [results_per_beta_op[beta]['Expected Profit'] / 1e3 for beta in betas]
-cvar_values = [results_per_beta_op[beta]['CVaR'] / 1e3 for beta in betas]
+# ax = fig.gca()
+# betas = list(results_per_beta_op.keys())
+# expected_profit = [results_per_beta_op[beta]['Expected Profit'] / 1e3 for beta in betas]
+# cvar_values = [results_per_beta_op[beta]['CVaR'] / 1e3 for beta in betas]
 
 
 # # Adjust bbox and arrowprops as needed
@@ -271,42 +271,42 @@ cvar_values = [results_per_beta_op[beta]['CVaR'] / 1e3 for beta in betas]
 #                     annotation_clip=False)
 
 
-plt.plot(cvar_values, expected_profit, marker='o', linestyle='--', color='maroon', markersize=5, markeredgecolor='darkslategray', markeredgewidth=0.5, linewidth=1.2)
-plt.xlabel('CVaR [kEUR]')
-plt.ylabel('Expected Profit [kEUR]')
+# plt.plot(cvar_values, expected_profit, marker='o', linestyle='--', color='maroon', markersize=5, markeredgecolor='darkslategray', markeredgewidth=0.5, linewidth=1.2)
+# plt.xlabel('CVaR [kEUR]')
+# plt.ylabel('Expected Profit [kEUR]')
 
-#plt.yticks(np.arange(140, 161, 2.5))
-#plt.xticks(np.arange(0, 20, 2.5))
+# #plt.yticks(np.arange(140, 161, 2.5))
+# #plt.xticks(np.arange(0, 20, 2.5))
 
-plt.xlim([0,25000 / 1e3])
-ax.set_ylim([165000 / 1e3, 175000 / 1e3])
+# plt.xlim([0,25000 / 1e3])
+# ax.set_ylim([165000 / 1e3, 175000 / 1e3])
 
-plt.title('One-price: Expected Profit vs. CVaR for different values of \u03B2')
+# plt.title('One-price: Expected Profit vs. CVaR for different values of \u03B2')
 
-#plt.savefig('Figures/One-price_Expected_Profit_vs_CVaR.png', dpi=300, bbox_inches='tight')
+# #plt.savefig('Figures/One-price_Expected_Profit_vs_CVaR.png', dpi=300, bbox_inches='tight')
 
-plt.tight_layout()
-plt.show()
+# plt.tight_layout()
+# plt.show()
 
 
 # In[266]:
 
 
-var_values = []
-betas = list(results_per_beta_op.keys())
-expected_profit = [results_per_beta_op[beta]['Expected Profit'] for beta in betas]
-var_values = [results_per_beta_op[beta]['VaR'] for beta in betas]
+# var_values = []
+# betas = list(results_per_beta_op.keys())
+# expected_profit = [results_per_beta_op[beta]['Expected Profit'] for beta in betas]
+# var_values = [results_per_beta_op[beta]['VaR'] for beta in betas]
 
-# Plot VaR vs. beta
-plt.figure(figsize=(8, 6))
-plt.plot(beta_values[1:] , var_values[1:], marker='o', linestyle='-')
-plt.xlabel('Beta')
-plt.ylabel('VaR')
-plt.title('VaR vs. Beta')
-plt.grid(True)
-plt.ylim(28500, 29500)
-plt.margins(x=0)
-plt.show()
+# # Plot VaR vs. beta
+# plt.figure(figsize=(8, 6))
+# plt.plot(beta_values[1:] , var_values[1:], marker='o', linestyle='-')
+# plt.xlabel('Beta')
+# plt.ylabel('VaR')
+# plt.title('VaR vs. Beta')
+# plt.grid(True)
+# plt.ylim(28500, 29500)
+# plt.margins(x=0)
+# plt.show()
 
 
 # # Two-price Scheme
@@ -477,79 +477,79 @@ def cvr_tp_scheme(scenarios, WIND_CAPACITY, T, OMEGA, alpha, beta_values, minimi
             print("Optimization was not successful.")
     return results_per_beta,p_DA_values_per_beta
 
-results_per_beta_tp, p_DA_values_per_beta_tp = cvr_tp_scheme(scenarios, WIND_CAPACITY, T, OMEGA, alpha, beta_values, minimize_printouts=True)
 
 
 # In[216]:
+# results_per_beta_tp, p_DA_values_per_beta_tp = cvr_tp_scheme(scenarios, WIND_CAPACITY, T, OMEGA, alpha, beta_values, minimize_printouts=True)
 
 
-# Plot expected value vs. CVaR for different beta values
+# # Plot expected value vs. CVaR for different beta values
 
-fig = plt.figure(figsize=(10, 6))
+# fig = plt.figure(figsize=(10, 6))
 
-ax = fig.gca()
-betas = list(results_per_beta_tp.keys())
-expected_profit = [results_per_beta_tp[beta]['Expected Profit'] / 1e3 for beta in betas]
-cvar_values = [results_per_beta_tp[beta]['CVaR'] / 1e3 for beta in betas]
-
-
-# Adjust bbox and arrowprops as needed
-arrowprops = dict(linestyle="dotted", arrowstyle='-', color='black', alpha=1)
-bbox_props = dict(boxstyle="round,pad=0.25", fc="lightgrey", ec="black", lw=1, linestyle=':', alpha=1)
-
-offsets = [(25,15),   # 0.0
-           (-10,15),  # 0.1
-           (-5,15),   # 0.2
-           (-25,-10), # 0.3
-           (-30,-25), # 0.4
-           (-5,-25),  # 0.5
-           (-25, 35), # 0.6
-           (5, 45),   # 0.7
-           (25,25),   # 0.8
-           (30,0),    # 0.9
-           (-75,35)]  # 1.0
+# ax = fig.gca()
+# betas = list(results_per_beta_tp.keys())
+# expected_profit = [results_per_beta_tp[beta]['Expected Profit'] / 1e3 for beta in betas]
+# cvar_values = [results_per_beta_tp[beta]['CVaR'] / 1e3 for beta in betas]
 
 
-for i in range(len(betas)):
-    if i < (len(betas) - 1): 
-        label = '\u03B2 = %.1f' % betas[i]
-        xy = (cvar_values[i], expected_profit[i])
-    else: 
-        label = '\u03B2 = %.1f\n\n(Exp. profit = %.2f kEUR)' % (betas[i], expected_profit[i])
-        xy = (cvar_values[i], 140)
+# # Adjust bbox and arrowprops as needed
+# arrowprops = dict(linestyle="dotted", arrowstyle='-', color='black', alpha=1)
+# bbox_props = dict(boxstyle="round,pad=0.25", fc="lightgrey", ec="black", lw=1, linestyle=':', alpha=1)
 
-    ax.annotate(label, 
-                    xy=xy, 
-                    xytext=offsets[i], 
-                    xycoords='data', 
-                    textcoords='offset points', 
-                    arrowprops=arrowprops,
-                    bbox=bbox_props,
-                    fontsize=8,
-                    color='maroon',
-                    ha = 'center',
-                    va = 'center',
-                    rotation=0,
-                    clip_on=False,
-                    annotation_clip=False)
+# offsets = [(25,15),   # 0.0
+#            (-10,15),  # 0.1
+#            (-5,15),   # 0.2
+#            (-25,-10), # 0.3
+#            (-30,-25), # 0.4
+#            (-5,-25),  # 0.5
+#            (-25, 35), # 0.6
+#            (5, 45),   # 0.7
+#            (25,25),   # 0.8
+#            (30,0),    # 0.9
+#            (-75,35)]  # 1.0
 
 
-plt.plot(cvar_values, expected_profit, marker='o', linestyle='--', color='maroon', markersize=5, markeredgecolor='darkslategray', markeredgewidth=0.5, linewidth=1.2)
-plt.xlabel('CVaR [kEUR]')
-plt.ylabel('Expected Profit [kEUR]')
+# for i in range(len(betas)):
+#     if i < (len(betas) - 1): 
+#         label = '\u03B2 = %.1f' % betas[i]
+#         xy = (cvar_values[i], expected_profit[i])
+#     else: 
+#         label = '\u03B2 = %.1f\n\n(Exp. profit = %.2f kEUR)' % (betas[i], expected_profit[i])
+#         xy = (cvar_values[i], 140)
 
-plt.yticks(np.arange(140, 161, 2.5))
-plt.xticks(np.arange(0, 20, 2.5))
+#     ax.annotate(label, 
+#                     xy=xy, 
+#                     xytext=offsets[i], 
+#                     xycoords='data', 
+#                     textcoords='offset points', 
+#                     arrowprops=arrowprops,
+#                     bbox=bbox_props,
+#                     fontsize=8,
+#                     color='maroon',
+#                     ha = 'center',
+#                     va = 'center',
+#                     rotation=0,
+#                     clip_on=False,
+#                     annotation_clip=False)
 
-plt.xlim([0,19000 / 1e3])
-ax.set_ylim([140000 / 1e3, 160000 / 1e3])
 
-plt.title('Two-price: Expected Profit vs. CVaR for different values of \u03B2')
+# plt.plot(cvar_values, expected_profit, marker='o', linestyle='--', color='maroon', markersize=5, markeredgecolor='darkslategray', markeredgewidth=0.5, linewidth=1.2)
+# plt.xlabel('CVaR [kEUR]')
+# plt.ylabel('Expected Profit [kEUR]')
 
-#plt.savefig('Figures/Two-price_Expected_Profit_vs_CVaR.png', dpi=300, bbox_inches='tight')
+# plt.yticks(np.arange(140, 161, 2.5))
+# plt.xticks(np.arange(0, 20, 2.5))
 
-plt.tight_layout()
-plt.show()
+# plt.xlim([0,19000 / 1e3])
+# ax.set_ylim([140000 / 1e3, 160000 / 1e3])
+
+# plt.title('Two-price: Expected Profit vs. CVaR for different values of \u03B2')
+
+# #plt.savefig('Figures/Two-price_Expected_Profit_vs_CVaR.png', dpi=300, bbox_inches='tight')
+
+# plt.tight_layout()
+# plt.show()
 
 
 # # Export optimal day-ahead schedule for subsequent tasks
@@ -559,15 +559,15 @@ plt.show()
 # In[225]:
 
 
-BETA_EXPORT = 0.5 # the beta value to export day-ahead bids for
+# BETA_EXPORT = 0.5 # the beta value to export day-ahead bids for
 
-df = pd.DataFrame(columns=['Hour', 'One-price Bids [MW]', 'Two-price Bids [MW]'])
-df['Hour'] = range(T)
-#df['One-price Bids [MW]'] = results_op['Summary']['DA Bid [MW]'].values
-df['Two-price Bids [MW]'] = results_per_beta_tp[BETA_EXPORT]['Summary']['DA Bid [MW]'].values
-df.set_index('Hour', inplace=True)
+# df = pd.DataFrame(columns=['Hour', 'One-price Bids [MW]', 'Two-price Bids [MW]'])
+# df['Hour'] = range(T)
+# #df['One-price Bids [MW]'] = results_op['Summary']['DA Bid [MW]'].values
+# df['Two-price Bids [MW]'] = results_per_beta_tp[BETA_EXPORT]['Summary']['DA Bid [MW]'].values
+# df.set_index('Hour', inplace=True)
 
-#df.to_csv('Data/Optimal_DA_bids_from_CVaR.csv')
+# #df.to_csv('Data/Optimal_DA_bids_from_CVaR.csv')
 
-df
+# df
 
