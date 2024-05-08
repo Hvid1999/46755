@@ -92,10 +92,10 @@ def cvr_op_scheme(scenarios, WIND_CAPACITY, T, OMEGA, alpha, beta_values, minimi
 
         #============= Objective function =============
         # Define objective function
-        expected_value = gb.quicksum(PI * scenarios[str(w)]['Spot Price [EUR/MWh]'][t] * (p_DA[t] + price_coeff[t,w] * delta[t,w])
+        expected_value = gb.quicksum((1/OMEGA) * scenarios[str(w)]['Spot Price [EUR/MWh]'][t] * (p_DA[t] + price_coeff[t,w] * delta[t,w])
                                     for t in range(T) for w in range(OMEGA))
         
-        cvar = zeta - (1 / (1 - alpha)) * gb.quicksum(PI * eta[w] for w in range(OMEGA))
+        cvar = zeta - (1 / (1 - alpha)) * gb.quicksum((1/OMEGA) * eta[w] for w in range(OMEGA))
 
         obj = (1 - beta) * expected_value + beta * cvar
 
@@ -348,9 +348,9 @@ def cvr_tp_scheme(scenarios, WIND_CAPACITY, T, OMEGA, alpha, beta_values, minimi
 
         #============= Objective function =============
         # Set objective function
-        expected_value = gb.quicksum(PI * (scenarios[str(w)]['Spot Price [EUR/MWh]'][t] * p_DA[t] + imbalance_revenue[t,w]) for t in range(T) for w in range(OMEGA))
+        expected_value = gb.quicksum((1/OMEGA) * (scenarios[str(w)]['Spot Price [EUR/MWh]'][t] * p_DA[t] + imbalance_revenue[t,w]) for t in range(T) for w in range(OMEGA))
         
-        cvar = zeta - (1 / (1 - alpha)) * gb.quicksum(PI * eta[w] for w in range(OMEGA))
+        cvar = zeta - (1 / (1 - alpha)) * gb.quicksum((1/OMEGA) * eta[w] for w in range(OMEGA))
         obj = (1 - beta)*expected_value + beta*cvar
 
         m.setObjective(obj, direction)
